@@ -238,16 +238,17 @@ void loop() {
          float temp = bme.readTemperature();
          float hum = bme.readHumidity();
 
+         // Update statistics with latest temperature reading
          if (temp < minTemp) {
-           minTemp = temp;
+           minTemp = temp;    // New lowest temperature recorded
          }
 
          if (temp > maxTemp) {
-           maxTemp = temp;
+           maxTemp = temp;   // New highest temperature recorded
          }
 
          if (temp > TEMP_DREMPEL) {
-           threshold += 1;
+           threshold += 1;  // Increment threshold exceeded counter
          }
         
         // Control warning LED based on temperature threshold
@@ -288,6 +289,7 @@ void loop() {
           // If held for 2+ seconds and not already processed
           if (pressDuration >= 2000 && !longPressDetected) {
 
+            // Cycle through modes: SENSOR → INFO → STATS → SENSOR
             if (currentMode == MODE_SENSOR) {
               currentMode = MODE_INFO;
             } else if (currentMode == MODE_INFO) {
@@ -327,7 +329,7 @@ void loop() {
             sensorReady = false; // sensor fails > turn off
           }
 
-          showSensorData(temp, hum);
+          showSensorData(temp, hum); // Update OLED display with current mode and sensor readings
         } 
 
     // remember when we did the last update
