@@ -52,6 +52,10 @@ Makefile
 install_manifest.txt
 compile_commands.json
 
+never.h
+secrets.h
+*.bin
+
 # Temporary files
 *.tmp
 *.log
