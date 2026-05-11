@@ -28,9 +28,6 @@ const int BUTTON_PIN = 4;
 bool buttonPressed = false;
 const int LED_BUTTON = 5;
 
-int ledState = LOW;
-unsigned long previousMillis = 0;
-const unsigned long interval = 1000;
 const float TEMP_DREMPEL = 28.00;
 
 const int MODE_INFO = 1;
@@ -123,12 +120,10 @@ void showSensorData(float temp, float hum) {
     display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE);
     
-    // Activate warning LED and show alert if temperature exceeds threshold
+    // Show alert on OLED if temperature exceeds threshold
+    // (LED is controlled in loop(), not here, to avoid duplicate logic)
     if (temp > TEMP_DREMPEL) {
-        digitalWrite(LED_BUTTON, HIGH);  // Turn on LED 
-        display.println("Warm!");        // Show alert on OLED
-    } else {
-        digitalWrite(LED_BUTTON, LOW);   // Turn off LED 
+        display.println("Warm!");
     }
     
     // Display content based on current operating mode
@@ -167,7 +162,7 @@ void showSensorData(float temp, float hum) {
        else {
         // Sensor Mode: show environmental data and button feedback
         if (buttonPressed) {
-          display.println("Button pressed!");  // A acknowledgment of button pressed
+          display.println("Button pressed!");  // Acknowledgment of button pressed
           buttonPressed = false;               // Reset flag to show message only once
         }
         display.println("Measure Environment");
@@ -226,36 +221,29 @@ void setup() {
 
 void loop() {
 
-     // reads the button always
-     if (digitalRead(BUTTON_PIN) == LOW) {
-       buttonPressed = true;
-       delay(50);
-     }
-
     // Checks if it's time for an update
      if(millis() - lastUpdate >= UPDATE_INTERVAL) { 
         if (sensorReady && oledReady) {
          float temp = bme.readTemperature();
          float hum = bme.readHumidity();
 
-         // Update statistics with latest temperature reading
          if (temp < minTemp) {
-           minTemp = temp;    // New lowest temperature recorded
+           minTemp = temp;
          }
 
          if (temp > maxTemp) {
-           maxTemp = temp;   // New highest temperature recorded
+           maxTemp = temp;
          }
 
          if (temp > TEMP_DREMPEL) {
-           threshold += 1;  // Increment threshold exceeded counter
+           threshold += 1;
          }
         
         // Control warning LED based on temperature threshold
         if (temp > TEMP_DREMPEL) {
            digitalWrite(LED_BUTTON, HIGH); // Turn on LED if over the threshold
          } else {
-           digitalWrite(LED_BUTTON, LOW);  // Turn on LED if under the threshold
+           digitalWrite(LED_BUTTON, LOW);  // Turn off LED if under the threshold
         }
         // Read the current raw state of the button (HIGH = released, LOW = pressed)
         int reading = digitalRead(BUTTON_PIN);
@@ -276,6 +264,7 @@ void loop() {
                // Button just pressed → start long-press timer
               startTime = millis();
               longPressDetected = false;  // Allow detection for this press
+              buttonPressed = true;       // Flag for "Button pressed!" message on OLED
             }
             if (buttonState == HIGH) {
                 longPressDetected = false;
@@ -289,7 +278,6 @@ void loop() {
           // If held for 2+ seconds and not already processed
           if (pressDuration >= 2000 && !longPressDetected) {
 
-            // Cycle through modes: SENSOR → INFO → STATS → SENSOR
             if (currentMode == MODE_SENSOR) {
               currentMode = MODE_INFO;
             } else if (currentMode == MODE_INFO) {
@@ -303,7 +291,7 @@ void loop() {
           }   
       }
         
-        // Auto-return from Info Mode after 5 seconds
+        // Auto-return from Info Mode after 15 seconds
         if (currentMode == MODE_INFO) {
             if (millis() - infoModeStartTime >= infoModeDuration) {
               currentMode = MODE_SENSOR;  // Return to sensor readings
@@ -329,14 +317,12 @@ void loop() {
             sensorReady = false; // sensor fails > turn off
           }
 
-          showSensorData(temp, hum); // Update OLED display with current mode and sensor readings
+          showSensorData(temp, hum);
         } 
 
     // remember when we did the last update
     lastUpdate = millis();
   }
-
-  delay(2000);
 
   // Web server must always listen
   server.handleClient();
