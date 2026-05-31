@@ -91,4 +91,4 @@ Note: The button is connected between GPIO 4 and GND. The code enables the inter
 > cp secrets.h.example secrets.h
 > ```
 
-> Open `secrets.h` and replace `"MijnESP32"` and `"12345678"` with your WiFi name and password.
+> Open `secrets.h` and replace `"MyESP32"` and `"12345678"` with your WiFi name and password.
